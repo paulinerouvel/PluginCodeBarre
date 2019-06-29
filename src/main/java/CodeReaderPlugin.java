@@ -1,37 +1,43 @@
 import com.asprise.ocr.Ocr;
-import org.bytedeco.javacpp.presets.opencv_core;
 import org.bytedeco.javacv.*;
 import org.bytedeco.javacv.Frame;
 
 import javax.swing.*;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Date;
+import org.json.JSONObject;
 
 import static org.bytedeco.javacpp.opencv_core.IplImage;
 import static org.bytedeco.javacpp.opencv_core.cvFlip;
 import static org.bytedeco.javacpp.opencv_imgcodecs.cvSaveImage;
 
 
-/**
- * Created by gtiwari on 1/3/2017.
- */
 
-public class Test implements Runnable {
+
+
+public class CodeReaderPlugin implements Runnable  {
+
+
     final int INTERVAL = 100;///you may use interval
     CanvasFrame canvas = new CanvasFrame("Web Cam");
     static String namePhoto ="";
     static IplImage imgToSave = null;
 
 
-    public Test() {
+    public CodeReaderPlugin() {
 
         canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
     }
 
+
+    //methode de runnable
     public void run() {
 
         FrameGrabber grabber = new VideoInputFrameGrabber(0); // 1 for next camera
@@ -69,13 +75,13 @@ public class Test implements Runnable {
 
     }
 
-    public static void main(String[] args) {
-        Test gs = new Test();
+    public void launch() {
+        CodeReaderPlugin gs = new CodeReaderPlugin();
         Thread th = new Thread(gs);
         th.start();
 
 
-        JFrame page = new JFrame("Fentre");
+        JFrame page = new JFrame("Fenetre");
         Button b = new Button();
 
 
@@ -109,15 +115,54 @@ public class Test implements Runnable {
 
                 File f = new File("src/main/resources/capture" + (hash) + ".jpg");
                 f.deleteOnExit();
+
+                s = "[[EAN-13: 8002270014901]]";
+
+                String[] tabS = s.split(" ");
+
+                String code = tabS[1].substring(0, 13);
+
+
+
+
+                String urlStr = "https://fr.openfoodfacts.org/api/v0/produit/" + code + ".json";
+
+                try{
+                    URL url = new URL(urlStr);
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    con.setRequestMethod("GET");
+                    con.connect();
+
+                    BufferedReader in = new BufferedReader(
+                            new InputStreamReader(con.getInputStream()));
+                    String inputLine;
+                    StringBuffer response = new StringBuffer();
+
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    in.close();
+
+
+
+                    JSONObject productInfo = new JSONObject(response.toString());
+                    JSONObject product = productInfo.getJSONObject("product");
+                    System.out.println(product.getString("brands"));
+                    System.out.println(product.getString("generic_name_fr"));
+                    System.out.println(product.getString("image_small_url"));
+
+
+
+                }
+                catch (Exception exec){
+                    System.out.println(exec);
+                }
             }
         });
 
-        //API
-        //GET https://fr.openfoodfacts.org/api/v0/produit/3017620425035.json
-
-
-
     }
+
+
 
 
 

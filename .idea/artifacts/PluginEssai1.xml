@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="PluginEssai1">
+    <output-path>$USER_HOME$/Desktop</output-path>
+    <root id="archive" name="PluginEssai1.jar" />
+  </artifact>
+</component>
